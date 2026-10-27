@@ -1,133 +1,169 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-  LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer 
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
 } from 'recharts';
-import { Info } from 'lucide-react';
 
 export default function App() {
-  const [data, setData] = useState<any>(null);
-  const [date, setDate] = useState('2026-01-15T00:00:00Z');
-  const [loading, setLoading] = useState(false);
+  const [date, setDate] = useState('2026-01-16T00:00:00Z');
+  const [data, setData] = useState({ kpis: null, chart_data: [] });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    // Fetch from your FastAPI backend
-    axios.get(`https://backend-git-main-piyushratn932-5174s-projects.vercel.app/`)
-      .then(res => {
-        setData(res.data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Connected directly to your live Vercel Backend!
+        const response = await axios.get(`https://backend-piyushratn932-5174s-projects.vercel.app/api/decision-view?date=${date}`);
+        setData(response.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+      setLoading(false);
+    };
+    fetchData();
   }, [date]);
 
+  const { kpis, chart_data } = data;
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8 font-sans">
-      <header className="mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Wind Forecast Monitor</h1>
-          <p className="text-gray-500 mt-1">Day-Ahead Power Purchasing (D-1 09:00 UTC Cutoff)</p>
-        </div>
-        <select 
-          className="p-2 border border-gray-300 rounded-lg shadow-sm bg-white font-medium focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-          value={date} 
-          onChange={(e) => setDate(e.target.value)}
-        >
-          <option value="2026-01-14T00:00:00Z">Jan 14, 2026</option>
-          <option value="2026-01-15T00:00:00Z">Jan 15, 2026</option>
-          <option value="2026-01-16T00:00:00Z">Jan 16, 2026</option>
-          <option value="2026-01-17T00:00:00Z">Jan 17, 2026</option>
-          <option value="2026-01-18T00:00:00Z">Jan 18, 2026</option>
-        </select>
-      </header>
-
-      {loading || !data ? (
-        <div className="flex items-center justify-center h-64 text-gray-500 font-medium">Loading dataset...</div>
-      ) : (
-        <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-            <KpiCard 
-              title="MAE (Normalized)" 
-              value={`${data.kpis.normalized_mae.toFixed(1)}%`} 
-              tooltip="Mean Absolute Error normalized by the average actual generation." 
-            />
-            <KpiCard 
-              title="Bias" 
-              value={`${data.kpis.bias.toFixed(1)} MW`} 
-              tooltip="Positive means we systematically over-forecasted (risk of shortfall)." 
-            />
-            <KpiCard 
-              title="Thermal Buffer (90%)" 
-              value={`${data.kpis.thermal_buffer_90.toFixed(0)} MW`} 
-              tooltip="Extra thermal generation needed on standby to cover 90% of wind shortfall scenarios." 
-            />
-            <KpiCard 
-              title="Over-Forecast Share" 
-              value={`${data.kpis.over_forecast_share.toFixed(1)}%`} 
-              tooltip="Percentage of half-hours where forecast was higher than actual generation." 
-            />
+    <div className="min-h-screen bg-gray-50 p-8 text-gray-800 font-sans">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Wind Forecast Monitor</h1>
+            <p className="text-gray-500 mt-1">Day-Ahead Power Purchasing (D-1 09:00 UTC Cutoff)</p>
           </div>
+          <select 
+            className="border-gray-300 border rounded-md shadow-sm p-2 bg-white font-medium"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          >
+            <option value="2026-01-14T00:00:00Z">Jan 14, 2026</option>
+            <option value="2026-01-15T00:00:00Z">Jan 15, 2026</option>
+            <option value="2026-01-16T00:00:00Z">Jan 16, 2026</option>
+            <option value="2026-01-17T00:00:00Z">Jan 17, 2026</option>
+            <option value="2026-01-18T00:00:00Z">Jan 18, 2026</option>
+          </select>
+        </div>
 
-          {/* Main Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold mb-6 text-gray-800">Delivery Day Forecast vs Actuals</h2>
-            <div className="h-[500px]">
+        {/* KPI Cards */}
+        {kpis && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h3 className="text-gray-500 text-sm font-medium mb-2 flex justify-between">
+                MAE (Normalized) <span className="text-gray-400 cursor-help" title="Mean Absolute Error as % of Capacity">ⓘ</span>
+              </h3>
+              <p className="text-3xl font-bold text-gray-900">{(kpis as any).normalized_mae?.toFixed(1)}%</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h3 className="text-gray-500 text-sm font-medium mb-2 flex justify-between">
+                Bias <span className="text-gray-400 cursor-help" title="Average error (positive = overforecast)">ⓘ</span>
+              </h3>
+              <p className="text-3xl font-bold text-gray-900">{(kpis as any).bias?.toFixed(1)} MW</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h3 className="text-gray-500 text-sm font-medium mb-2 flex justify-between">
+                Thermal Buffer (90%) <span className="text-gray-400 cursor-help" title="Reserve needed to cover 90% of shortfalls">ⓘ</span>
+              </h3>
+              <p className="text-3xl font-bold text-gray-900">{(kpis as any).thermal_buffer_90?.toFixed(0)} MW</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h3 className="text-gray-500 text-sm font-medium mb-2 flex justify-between">
+                Over-Forecast Share <span className="text-gray-400 cursor-help" title="% of half-hours where forecast > actual">ⓘ</span>
+              </h3>
+              <p className="text-3xl font-bold text-gray-900">{((kpis as any).over_forecast_share * 100)?.toFixed(1)}%</p>
+            </div>
+          </div>
+        )}
+
+        {/* Main Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">Delivery Day Forecast vs Actuals</h2>
+          
+          <div className="h-[500px] w-full">
+            {loading ? (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">Loading data...</div>
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.chart_data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
+                <AreaChart data={chart_data} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis 
                     dataKey="startTime" 
-                    tickFormatter={(tick) => {
-                      const d = new Date(tick);
-                      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    }} 
-                    tickMargin={10}
+                    tickFormatter={(time) => new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    minTickGap={30}
+                    stroke="#9ca3af"
                   />
                   <YAxis 
-                    label={{ value: 'Generation (MW)', angle: -90, position: 'insideLeft', offset: -5 }} 
-                    tickMargin={10}
+                    domain={['auto', 'auto']}
+                    tickFormatter={(val) => `${val} MW`}
+                    stroke="#9ca3af"
                   />
+                  {/* FIX: Typecasted to 'any' to resolve strict TypeScript Vercel build errors */}
                   <Tooltip 
-                    labelFormatter={(label) => new Date(label).toLocaleString()} 
-                    formatter={(value: number) => [`${value.toFixed(1)} MW`]}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    labelFormatter={(label: any) => new Date(label).toLocaleString()}
+                    formatter={(value: any, name: any) => [`${Math.round(value)} MW`, name]}
                   />
-                  <Legend verticalAlign="top" height={36} iconType="circle" />
+                  <Legend verticalAlign="top" height={36} />
                   
-                  {/* Uncertainty Bands */}
-                  <Area type="monotone" name="Historical P10-P90 Band" dataKey="band_upper" stroke="none" fill="#f3f4f6" />
-                  <Area type="monotone" dataKey="band_lower" stroke="none" fill="#ffffff" legendType="none" tooltipType="none" />
+                  {/* P10-P90 Uncertainty Band */}
+                  <Area 
+                    type="monotone" 
+                    dataKey="band_upper" 
+                    stroke="none" 
+                    fill="#e5e7eb" 
+                    name="Historical P10-P90 Band" 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="band_lower" 
+                    stroke="none" 
+                    fill="#ffffff" 
+                    tooltipType="none"
+                    name="" 
+                  />
                   
-                  {/* Forecast and Actual Lines */}
-                  <Line type="stepAfter" name="Latest Forecast (D-1)" dataKey="forecast" stroke="#3b82f6" strokeWidth={3} dot={false} />
-                  <Line type="stepAfter" name="Actual Generation" dataKey="actual" stroke="#10b981" strokeWidth={3} dot={false} />
+                  {/* Actual Generation */}
+                  <Area 
+                    type="stepAfter" 
+                    dataKey="actual" 
+                    stroke="#10b981" 
+                    fill="none" 
+                    strokeWidth={2}
+                    name="Actual Generation" 
+                  />
+                  
+                  {/* Latest Valid Forecast */}
+                  <Area 
+                    type="monotone" 
+                    dataKey="forecast" 
+                    stroke="#3b82f6" 
+                    fill="none"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    name="Latest Forecast (D-1)" 
+                  />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
-            <div className="mt-6 text-sm text-blue-800 bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <strong>Note:</strong> The grey uncertainty band represents historical P10-P90 forecast errors. It is built strictly from days prior to the selected delivery date to prevent data leakage.
-            </div>
+            )}
           </div>
-        </>
-      )}
+        </div>
+
+        {/* Note Footer */}
+        <div className="bg-blue-50 text-blue-800 p-4 rounded-lg text-sm">
+          <strong>Note:</strong> The grey uncertainty band represents historical P10-P90 forecast errors. It is built strictly from days prior to the selected delivery date to prevent data leakage.
+        </div>
+
+      </div>
     </div>
   );
 }
-
-const KpiCard = ({ title, value, tooltip }: { title: string, value: string, tooltip: string }) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col relative group hover:border-blue-400 hover:shadow-md transition-all cursor-default">
-    <div className="flex items-center justify-between mb-4">
-      <span className="text-gray-500 font-medium text-sm tracking-wide">{title}</span>
-      <Info size={18} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
-      <div className="absolute top-12 right-0 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
-        {tooltip}
-      </div>
-    </div>
-    <span className="text-4xl font-extrabold text-gray-900 tracking-tight">{value}</span>
-  </div>
-);
