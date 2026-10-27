@@ -13,7 +13,7 @@
 
 <br/>
 
-**[🔗 Live Demo]([https://insert-your-vercel-url-here.vercel.app/](https://frontend-8gvb.vercel.app/)) · [🎥 Video Walkthrough]([https://insert-your-unlisted-youtube-link-here](https://youtu.be/ZO-xs8Nunyw)) · [🐛 Report Bug](#) · [✨ Request Feature](#)**
+**[🔗 Live Demo](https://frontend-8gvb.vercel.app/) · [🎥 Video Walkthrough](https://youtu.be/ZO-xs8Nunyw) · [🐛 Report Bug](#) · [✨ Request Feature](#)**
 
 </div>
 
