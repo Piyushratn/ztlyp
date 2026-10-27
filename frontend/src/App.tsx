@@ -21,7 +21,7 @@ export default function App() {
       setLoading(true);
       try {
         // Connected directly to your live Vercel Backend!
-        const response = await axios.get(`https://backend-piyushratn932-5174s-projects.vercel.app/api/decision-view?date=${date}`);
+        const response = await axios.get(`https://backend-three-iota-44.vercel.app/api/decision-view?date=${date}`);
         setData(response.data);
       } catch (error) {
         console.error('Error fetching data:', error);
