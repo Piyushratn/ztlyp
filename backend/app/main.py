@@ -5,16 +5,23 @@ from typing import List, Dict, Any, Optional
 import app.elexon as elexon
 import app.analysis as analysis
 from functools import lru_cache
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Wind Forecast Monitor API")
 
 # Enable CORS for local Vite frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust in production (e.g., to your Vercel URL)
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# This gives you a friendly message on the base URL instead of a 404
+@app.get("/")
+def read_root():
+    return {"status": "Wind Forecast API is live", "docs": "Add /docs to the URL to see the Swagger UI"}
 
 # Cache the dataset in memory to avoid reading CSVs on every request
 @lru_cache(maxsize=1)
