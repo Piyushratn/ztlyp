@@ -14,7 +14,7 @@ export default function App() {
   useEffect(() => {
     setLoading(true);
     // Fetch from your FastAPI backend
-    axios.get(`http://localhost:8000/api/decision-view?date=${date}`)
+    axios.get(`https://backend-git-main-piyushratn932-5174s-projects.vercel.app/`)
       .then(res => {
         setData(res.data);
         setLoading(false);
